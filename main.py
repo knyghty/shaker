@@ -7,6 +7,7 @@ from mypkg.nested import n_a, n_b
 
 
 dunder = __import__("mypkg.dunder", fromlist=("greet",))
+m = __import__("mypkg", fromlist=("fromlist",))
 
 
 def main():
@@ -17,8 +18,9 @@ def main():
         il_im = importlib.import_module("il.im")
 
     print(dunder.greet())
-    n_b.print_foo()
-    n_a.print_bar()
+    print(m.fromlist.x())
+    n_a.print_foo()
+    n_b.print_bar()
     print(il_im.something())
     print(il_dunder.something_else())
     print(f"Version: {pkg2.VERSION}")
