@@ -105,7 +105,7 @@ def purge(modules_to_keep):
                     if filename in DO_NOT_DELETE:
                         continue
 
-                    print(f"Deleting {full_path}")
+                    logger.info("Deleting %s", full_path)
                     os.unlink(full_path)
 
 
