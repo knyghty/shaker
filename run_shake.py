@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import pprint
 
 from shaker import shake
 
@@ -11,7 +10,7 @@ args = parser.parse_args()
 
 
 def main():
-    pprint.pprint(shake.shake(args.infile))
+    shake.shake(args.infile)
 
 
 if __name__ == '__main__':

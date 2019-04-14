@@ -2,6 +2,8 @@ import ast
 import importlib
 import logging
 import os
+import pprint
+import sys
 
 from .analyzer import Analyzer
 
@@ -13,7 +15,15 @@ logger.setLevel(logging.WARNING)
 logger.addHandler(console)
 
 seen_modules = set()
-to_skip = {"importlib"}
+
+DO_NOT_DELETE = {
+    "latin_1.py",
+    "utf_8.py",
+    "site.py",
+    "_sitebuiltins.py",
+    "sysconfig.py",
+    "_sysconfigdata_m_linux_x86_64-linux-gnu.py",
+}
 
 
 def _warn(module, package_name):
@@ -45,11 +55,7 @@ def _import_module(module, package_name=None):
 def recurse_modules(modules):
     for imported_module in modules:
         if not hasattr(imported_module, "__file__"):
-            try:
-                logger.warning("%s has no __file__", imported_module.__name__)
-            except AttributeError:
-                # Someties __name__ can be None?
-                pass
+            logger.warning("%s has no __file__", imported_module.__name__)
             continue
 
         logger.info(imported_module.__file__)
@@ -84,6 +90,25 @@ def recurse_modules(modules):
             recurse_modules(imports)
 
 
+def purge(modules_to_keep):
+    for path in sys.path:
+        if path.endswith(".zip"):
+            continue
+        if path == '':
+            # This is the local dir.
+            path = '.'
+
+        for directory in os.walk(path):
+            for filename in directory[2]:
+                full_path = os.path.join(directory[0], filename)
+                if full_path not in modules_to_keep:
+                    if filename in DO_NOT_DELETE:
+                        continue
+
+                    print(f"Deleting {full_path}")
+                    os.unlink(full_path)
+
+
 def shake(entry_point):
     with open(entry_point, "r") as infile:
         tree = ast.parse(infile.read())
@@ -91,6 +116,7 @@ def shake(entry_point):
 
     analyzer = Analyzer()
     analyzer.visit(tree)
-    modules = [_import_module(module) for module in analyzer.imports if module not in to_skip]
+    modules = [_import_module(module) for module in analyzer.imports]
     recurse_modules(modules)
-    return seen_modules
+    pprint.pprint(seen_modules)
+    purge(seen_modules)
